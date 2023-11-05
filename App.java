@@ -1,140 +1,146 @@
 import javafx.application.Application;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
-import javafx.application.Application;
-import javafx.stage.Stage;
-import javafx.stage.Screen;
-import javafx.stage.Modality;
-import javafx.scene.control.Alert.AlertType;
 import javafx.geometry.Insets;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
-
+import javafx.scene.layout.*;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 public class App extends Application {
-    private ListView<String> listView;
-    private Label selectedItemLabel;
     private Stage primaryStage;
+    private ListView<String> websiteListView;
+    private TextArea detailsArea;
 
-    @Override
-    public void start(Stage primaryStage) {
-        this.primaryStage = primaryStage;
-        primaryStage.setTitle("Login Form Popup");
-        displayLoginFormPopup();
-
-        primaryStage.setTitle("JavaFX ListView App");
-        Screen screen = Screen.getPrimary();
-
-        // Set the stage's dimensions to match the screen's size
-        primaryStage.setWidth(screen.getVisualBounds().getWidth());
-        primaryStage.setHeight(screen.getVisualBounds().getHeight());
-
-        ObservableList<String> items = FXCollections.observableArrayList(
-            "Item 1", "Item 2", "Item 3", "Item 4"
-        );
-
-        // Create a ListView
-        listView = new ListView<>(items);
-        listView.getStyleClass().add("list-view");
-
-        // Create a Label for displaying selected item info
-        selectedItemLabel = new Label("Select an item from the list");
-
-        // Create a Button for adding items
-        Button addItemButton = new Button("Add Item");
-        addItemButton.setOnAction(e -> {
-            String newItem = "New Item " + (listView.getItems().size() + 1);
-            listView.getItems().add(newItem);
-            selectedItemLabel.setText("Selected Item: " + newItem); // Update the label
-        });
-
-        // Create a layout with two panes side by side
-        HBox layout = new HBox(10); // 10 is the spacing between panes
-        layout.getChildren().addAll(listView, selectedItemLabel);
-
-        // Create a layout for the button
-        VBox buttonLayout = new VBox(10);
-        buttonLayout.getChildren().addAll(addItemButton);
-
-        // Combine the main layout and the button layout
-        HBox root = new HBox(10);
-        root.getChildren().addAll(layout, buttonLayout);
-
-        // Create the scene and add the root layout
-        Scene scene = new Scene(root, 500, 300);
-
-        // Reference the CSS file for styling
-        scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
-
-        primaryStage.setScene(scene);
-        primaryStage.show();
-        primaryStage.close();
+    public static void main(String[] args) {
+        launch(args);
     }
 
-    private void displayLoginFormPopup() {
-        // Create a new stage for the popup
-        Stage popupStage = new Stage();
-        popupStage.initModality(Modality.APPLICATION_MODAL);
-        popupStage.initOwner(primaryStage);
-        popupStage.setTitle("Login Form");
+    public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+        primaryStage.setTitle("Password Manager");
 
-        // Create form components
+        // Check for authentication
+        if (!authenticateUser()) {
+            return; // Exit if authentication fails
+        }
+
+        setupMainApplication();
+    }
+
+    private boolean authenticateUser() {
+        Stage authStage = new Stage();
+        authStage.initModality(Modality.APPLICATION_MODAL);
+        authStage.initOwner(primaryStage);
+        authStage.setTitle("Authentication");
+
+        Label usernameLabel = new Label("Username:");
+        TextField usernameField = new TextField();
+
+        Label passwordLabel = new Label("Password:");
+        PasswordField passwordField = new PasswordField();
+        
+        Button loginButton = new Button("Login");
+
+        loginButton.setOnAction(event -> {
+            String username = usernameField.getText();
+            String password = passwordField.getText();
+
+            if ("DEMO".equals(username) && "PASSWORD".equals(password)) {
+                authStage.close();
+            } else {
+                showErrorAlert("Authentication Failed", "Invalid username or password.");
+            }
+        });
+
+        VBox authLayout = new VBox(10);
+        authLayout.setPadding(new Insets(10));
+        authLayout.getChildren().addAll(usernameLabel, usernameField, passwordLabel, passwordField, loginButton);
+
+        Scene authScene = new Scene(authLayout);
+        authStage.setScene(authScene);
+        authStage.showAndWait();
+
+        return !authStage.isShowing();
+    }
+
+    private void setupMainApplication() {
+        primaryStage.setTitle("Password Manager");
+
+        websiteListView = new ListView<>();
+        websiteListView.getItems().addAll("Website 1", "Website 2", "Website 3");
+
+        websiteListView.setOnMouseClicked(e -> showDetails());
+
+        Button addPasswordButton = new Button("Add Password");
+        addPasswordButton.setOnAction(e -> showPasswordForm());
+
+        HBox mainLayout = new HBox(10);
+        mainLayout.setPadding(new Insets(10));
+        mainLayout.getChildren().addAll(websiteListView, addPasswordButton);
+
+        detailsArea = new TextArea("Password Manager");
+        detailsArea.setEditable(false);
+        detailsArea.setMinWidth(300);
+
+        VBox mainPane = new VBox(10);
+        mainPane.getChildren().addAll(mainLayout, detailsArea);
+
+        Scene mainScene = new Scene(mainPane, 600, 400);
+        primaryStage.setScene(mainScene);
+        primaryStage.show();
+    }
+
+    private void showPasswordForm() {
+        Stage passwordFormStage = new Stage();
+        passwordFormStage.initModality(Modality.APPLICATION_MODAL);
+        passwordFormStage.initOwner(primaryStage);
+        passwordFormStage.setTitle("Add Password");
+
+        Label websiteLabel = new Label("Website:");
+        TextField websiteField = new TextField();
         Label usernameLabel = new Label("Username:");
         TextField usernameField = new TextField();
         Label passwordLabel = new Label("Password:");
         PasswordField passwordField = new PasswordField();
-        Button loginButton = new Button("Login");
+        CheckBox showPasswordCheckbox = new CheckBox("Show Password");
 
-        // Handle login button click
-        loginButton.setOnAction(event -> {
-            // Check the credentials (For simplicity, use "demo" as username and "password" as password)
-            if ("demo".equals(usernameField.getText()) && "password".equals(passwordField.getText())) {
-                // Close the popup and proceed to the main application
-                popupStage.close();
-                showMainApplication();
-            } else {
-                // Invalid credentials, show an error message
-                showErrorAlert();
-            }
+        Button saveButton = new Button("Save");
+
+        showPasswordCheckbox.setOnAction(e -> {
+            passwordField.setManaged(showPasswordCheckbox.isSelected());
+            passwordField.setVisible(showPasswordCheckbox.isSelected());
         });
 
-        // Create a layout for the form
-        VBox formLayout = new VBox(10);
-        formLayout.setPadding(new Insets(10));
-        formLayout.getChildren().addAll(usernameLabel, usernameField, passwordLabel, passwordField, loginButton);
+        saveButton.setOnAction(e -> {
+            String website = websiteField.getText();
+            String username = usernameField.getText();
+            String password = passwordField.getText();
 
-        // Create a scene for the form and set it as the content of the popup stage
-        Scene popupScene = new Scene(formLayout);
-        popupStage.setScene(popupScene);
+            websiteListView.getItems().add(website);
+            passwordFormStage.close();
+        });
 
-        // Show the popup
-        popupStage.showAndWait();
+        VBox passwordFormLayout = new VBox(10);
+        passwordFormLayout.setPadding(new Insets(10));
+        passwordFormLayout.getChildren().addAll(websiteLabel, websiteField, usernameLabel, usernameField, passwordLabel, passwordField, showPasswordCheckbox, saveButton);
+
+        Scene passwordFormScene = new Scene(passwordFormLayout);
+        passwordFormStage.setScene(passwordFormScene);
+        passwordFormStage.showAndWait();
     }
 
-    private void showErrorAlert() {
+    private void showDetails() {
+        String selectedWebsite = websiteListView.getSelectionModel().getSelectedItem();
+        if (selectedWebsite != null) {
+            detailsArea.setText("Website: " + selectedWebsite + "\nUsername: USERNAME\nPassword: PASSWORD");
+        }
+    }
+
+    private void showErrorAlert(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Invalid Credentials");
+        alert.setTitle(title);
         alert.setHeaderText(null);
-        alert.setContentText("Invalid username or password. Please try again.");
+        alert.setContentText(content);
         alert.showAndWait();
-    }
-
-    private void showMainApplication() {
-        
-        // Enter fullscreen mode
-        // primaryStage.setFullScreen(true);
-
-        // Create an ObservableList for the ListView
-        
-    }
-    
-    public static void main(String[] args) {
-        launch(args);
     }
 }
