@@ -81,8 +81,6 @@ public class App extends Application {
             }
         });
 
-
-
         VBox authLayout = new VBox(10);
         authLayout.setPadding(new Insets(10));
         authLayout.getChildren().addAll(usernameLabel, usernameField, passwordLabel, passwordField, loginButton);
@@ -152,10 +150,11 @@ public class App extends Application {
 
         });
 
-        boolean[] flag = new boolean[1];
+
         //Modify existing details of the database
         modifyDetails.setOnAction(e ->
         {
+            boolean[] flag = {false};
             Identifier = FXCollections.observableArrayList();
             ResultSet rs1 = fetchmysqlquery("SELECT Serial_Number FROM Password;");
             try {
@@ -196,21 +195,25 @@ public class App extends Application {
                     rootPForm.getChildren().addAll(webs, websField, updWeb);
                     updWeb.setOnAction(ae45 ->
                     {
+                        websites.clear();
+                        System.out.println("UpdateWebsite Function - calling websties.removeAll(): "+websites);
+                        websites.addAll(retrieveWebsites());
+                        System.out.println("UpdateWebsite Function - calling webites.AddAll(): "+websites);
                         String oldwebsite, serial = null;
-                        ResultSet resultSetfetch = fetchmysqlquery(String.format("SELECT Serial_Number, Website FROM Password WHERE Serial_Number = %d",comboBox.getSelectionModel().getSelectedItem()));
+                        ResultSet resultSetfetch = fetchmysqlquery(String.format("SELECT Serial_Number, Website FROM Password WHERE Serial_Number = %s;",comboBox.getSelectionModel().getSelectedItem()));
                         try {
                             resultSetfetch.next();
                             serial = resultSetfetch.getString("Serial_Number");
                             oldwebsite = resultSetfetch.getString("Website") + "("+serial+")";
-
                         }
-
                         catch(Exception ignore){oldwebsite = null;}
 
-                        String n = String.format("UPDATE password SET Website = \"%s\" WHERE Serial_Number=%d", websField.getText(), comboBox.getSelectionModel().getSelectedItem());
+                        String n = String.format("UPDATE password SET Website = \"%s\" WHERE Serial_Number=%d;", websField.getText(), comboBox.getSelectionModel().getSelectedItem());
                         System.out.println(n);
                         executemysqlquery(n);
-                        if(!websiteList.isEmpty()) {
+
+                        if(!websiteList.isEmpty())
+                        {
                             System.out.println(("WebsiteList: " + websiteList));
                             System.out.println("Old Website: " + oldwebsite);
                             int idx = websiteList.indexOf(oldwebsite);
@@ -242,12 +245,14 @@ public class App extends Application {
                     rootPForm.getChildren().addAll(user, userField, updUsr);
                     updUsr.setOnAction(aeu ->
                     {
-                        String n = String.format("UPDATE password SET UserName = \"%s\" WHERE Serial_Number=%d", userField.getText(), comboBox.getSelectionModel().getSelectedItem());
+                        String n = String.format("UPDATE password SET UserName = \"%s\" WHERE Serial_Number=%d;", userField.getText(), comboBox.getSelectionModel().getSelectedItem());
                         System.out.println(n);
                         if (executemysqlquery(n)) {
                             showConfirmationAlert("Success", "Username Updated");
                         }
                         rootPForm.getChildren().removeAll(usrCheckBox, user, userField, updUsr);
+                        System.out.println( "update user website list " + websiteList);
+
                     });
                     rootPForm.getChildren().removeAll(usrCheckBox);
                 });
@@ -258,7 +263,7 @@ public class App extends Application {
                     updPass.setOnAction(aep ->
                     {
 //
-                        String n = String.format("SELECT Website, Alias FROM Password WHERE Serial_Number = %d", comboBox.getSelectionModel().getSelectedItem());
+                        String n = String.format("SELECT Website, Alias FROM Password WHERE Serial_Number = %d;", comboBox.getSelectionModel().getSelectedItem());
                         ResultSet rs2 = fetchmysqlquery(n);
                         try {
                             rs2.next();
@@ -284,9 +289,11 @@ public class App extends Application {
 
         deleteWebsite.setOnAction(ae3->
         {
+            boolean[] flag = {false};
             Identifier = FXCollections.observableArrayList();
             ResultSet rs1 = fetchmysqlquery("SELECT Serial_Number FROM Password;");
             try {
+//                System.out.println("RST.NEXT() BEFORE WHILE LOOP "+ rs1.next());
                 while (rs1.next()) {
                     int S = rs1.getInt("Serial_Number");
                     System.out.println("Identifier me jaa rhaa hai ya nahi: " + Identifier.add(S));
@@ -295,10 +302,10 @@ public class App extends Application {
             }
 
             catch (Exception ignore){
-                System.out.println("In Exception, flag is now false and hence websites wont be dleeted");
+//                System.out.println("In Exception, flag is now false and hence websites wont be dleeted");
                 flag[0] = false;
             }
-            System.out.println("FLAG 0 VALUE: " + flag[0]);
+            System.out.println("FLAG 0 aftER DELETE STATEMTN VALUE: " + flag[0]);
             if(flag[0])
             {
                 Identifier = FXCollections.observableArrayList();
@@ -322,17 +329,17 @@ public class App extends Application {
                     }
                 }
                 catch (Exception ignore){flag[0] = false;}
-                System.out.println("In DeletePassword, ComboBox Setup");
+//                System.out.println("In DeletePassword, ComboBox Setup");
                 del.setOnAction(aed->
                 {
                     int i;
-                    System.out.println("Inside Delete Button");
+//                    System.out.println("Inside Delete Button");
                     String webName, userName, combined = null, alias1 = null;
                     int Snumber;
                     if (flag[0]) {
-                        System.out.println("Inside FLAG if Statement");
+//                        System.out.println("Inside FLAG if Statement");
                         Snumber = comboBox.getSelectionModel().getSelectedItem();
-                        String n = String.format("SELECT Website, UserName, Alias FROM Password WHERE Serial_Number = %d", Snumber);
+                        String n = String.format("SELECT Website, UserName, Alias FROM Password WHERE Serial_Number = %d;", Snumber);
                         ResultSet rs3 = fetchmysqlquery(n);
 
                         try {
@@ -345,7 +352,7 @@ public class App extends Application {
                         }
                         
                         //Creating Alias's Array
-                        ResultSet AliasArray = fetchmysqlquery("SELECT Alias FROM Password");
+                        ResultSet AliasArray = fetchmysqlquery("SELECT Alias FROM Password;");
                         List<String> AliasArr = new ArrayList<>();
                         try {
                             while (AliasArray.next()) {
@@ -370,7 +377,7 @@ public class App extends Application {
 //                        System.out.println(AlertYesNo("Confirmation", "Do you want to delete the following content?"));
                         if(AlertYesNo("Confirmation", "Do you want to delete the following content?" + combined))
                         {
-                            String seqel = String.format("DELETE FROM Password WHERE Serial_Number = %d", Snumber);
+                            String seqel = String.format("DELETE FROM Password WHERE Serial_Number = %d;", Snumber);
                             System.out.println(seqel);
                             executemysqlquery(seqel);
 
@@ -395,7 +402,7 @@ public class App extends Application {
             {
                 showErrorAlert("Database Error", "Enter data first");
             }
-            });
+        });
 
 
         HBox mainPane = new HBox(10);
@@ -495,7 +502,6 @@ public class App extends Application {
         alert.showAndWait();
     }
 
-
     public void stop() {
         MJ.closesql();
     }
@@ -544,7 +550,7 @@ public class App extends Application {
             showWarningAlert("Warning", "Website Name/Username/Password is Empty! Please enter details.");
         }
         else {
-            String sqlquery = String.format("INSERT INTO password(Website, UserName, HashedPass, Alias) VALUES (\"%s\",\"%s\", \"%s\" ,\"%s\")", w, u, p, p);
+            String sqlquery = String.format("INSERT INTO password(Website, UserName, HashedPass, Alias) VALUES (\"%s\",\"%s\", \"%s\" ,\"%s\");", w, u, p, p);
 
             executemysqlquery(sqlquery);
             System.out.println("HI");
@@ -552,7 +558,7 @@ public class App extends Application {
         }
 
         try {
-            PreparedStatement ps = connection.prepareStatement("Select Serial_Number FROM Password", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            PreparedStatement ps = connection.prepareStatement("Select Serial_Number FROM Password;", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             ResultSet rs = ps.executeQuery();
 
             rs.last();
@@ -593,7 +599,6 @@ public class App extends Application {
             SecretKeyManipulation.saveAESKeyToFile(keyFile, secretKey);
         }
     }
-
     private boolean AlertYesNo(String Title, String Content)
     {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION, Content, ButtonType.OK, ButtonType.CANCEL);
@@ -613,7 +618,6 @@ public class App extends Application {
             return false;
         }
     }
-
     private int OpenBracketFinder(String website)
     {
         int start_index = 0;
@@ -628,7 +632,6 @@ public class App extends Application {
         }
         return start_index;
     }
-
     private int CloseBracketFinder(String website)
     {
         int end_index = 0;
